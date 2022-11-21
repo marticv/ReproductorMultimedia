@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+
+    <Spinner
+        android:id="@+id/spSource"
+        android:layout_width="350dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.074" />
+
+    <Button
+        android:id="@+id/btplay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="36dp"
+        android:text="play"
+        app:layout_constraintStart_toStartOf="@+id/spSource"
+        app:layout_constraintTop_toBottomOf="@+id/spSource" />
+
+    <Button
+        android:id="@+id/btPause"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="pause"
+        app:layout_constraintEnd_toStartOf="@+id/btStop"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/btplay"
+        app:layout_constraintTop_toTopOf="@+id/btplay" />
+
+    <Button
+        android:id="@+id/btStop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="stop"
+        app:layout_constraintEnd_toEndOf="@+id/spSource"
+        app:layout_constraintTop_toTopOf="@+id/btPause" />
+
+    <VideoView
+        android:id="@+id/videoView"
+        android:layout_width="203dp"
+        android:layout_height="149dp"
+        android:layout_marginTop="36dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btPause" />
+
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="318dp"
+        android:layout_height="11dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/videoView" />
+
+    <TextView
+        android:id="@+id/tvMetadata"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="52dp"
+        android:text="TextView"
+        app:layout_constraintStart_toEndOf="@+id/tvState"
+        app:layout_constraintTop_toTopOf="@+id/tvState" />
+
+    <ImageButton
+        android:id="@+id/ibRewind"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:layout_marginTop="48dp"
+        android:background="@drawable/round_corner"
+        android:backgroundTint="@color/purple_500"
+        app:layout_constraintStart_toStartOf="@+id/btplay"
+        app:layout_constraintTop_toTopOf="@+id/videoView"
+        app:srcCompat="@drawable/ic_rewind" />
+
+    <ImageButton
+        android:id="@+id/ibFastForward"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:background="@drawable/round_corner"
+        android:backgroundTint="@color/purple_500"
+        app:layout_constraintEnd_toEndOf="@+id/btStop"
+        app:layout_constraintTop_toTopOf="@+id/ibRewind"
+        app:srcCompat="@drawable/ic_fast_forward" />
+
+    <TextView
+        android:id="@+id/tvState"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="60dp"
+        android:text="TextView"
+        app:layout_constraintStart_toStartOf="@+id/ibRewind"
+        app:layout_constraintTop_toBottomOf="@+id/progressBar" />
+
+    <TextView
+        android:id="@+id/tvDuration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TextView"
+        app:layout_constraintEnd_toEndOf="@+id/progressBar"
+        app:layout_constraintTop_toBottomOf="@+id/progressBar" />
+
+    <TextView
+        android:id="@+id/tvTimer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TextView"
+        app:layout_constraintStart_toStartOf="@+id/progressBar"
+        app:layout_constraintTop_toBottomOf="@+id/progressBar" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
