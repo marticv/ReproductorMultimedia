@@ -1,14 +1,17 @@
 package com.marticurto.reproductormultimedia
 
 import android.Manifest
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 
 /**
- * App para reproducir musica y video
+ * App para reproducir musica y video. Musica obtenida de https://file-examples.com/ y video de https://www.learningcontainer.com/
  *
  * @author Martí Curto Vendrell
  *
@@ -23,7 +26,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var tvState : TextView
     lateinit var tvTimer:TextView
     lateinit var tvDuration:TextView
-    lateinit var progresBar:ProgressBar
+    lateinit var seekBar: SeekBar
     lateinit var videoView:VideoView
 
 
@@ -49,18 +52,19 @@ class MainActivity : AppCompatActivity() {
         tvState = findViewById(R.id.tvState)
         tvTimer = findViewById(R.id.tvTimer)
         tvDuration =findViewById(R.id.tvDuration)
-        progresBar = findViewById(R.id.progressBar)
+        seekBar = findViewById(R.id.seekBar)
         videoView = findViewById(R.id.videoView)
 
 
+        //creamos recursos audiovisuales
         val myUri: Uri = Uri.parse("android.resource://" + packageName + "/" + R.raw.music)
         var mpMusic1 = MediaPlayer.create(this, myUri)
 
+        val myUri2: Uri = Uri.parse("android.resource://" + packageName + "/" + R.raw.music2)
         var mpMusic2 = MediaPlayer()
-        mpMusic2.setDataSource(applicationContext,myUri)
-
-        var mpVideo = MediaPlayer()
-
+        mpMusic2.setAudioStreamType(AudioManager.STREAM_MUSIC)
+        mpMusic2.setDataSource(applicationContext,myUri2)
+        mpMusic2.prepare()
 
         val videoUri:Uri = Uri.parse("android.resource://" + packageName + "/" + R.raw.video)
         videoView.setVideoURI(videoUri)
@@ -71,9 +75,21 @@ class MainActivity : AppCompatActivity() {
 
 
         //preparamos la parte visual
-        fillSpinner(spSource)
         btPause.isEnabled=false
         btStop.isEnabled=false
+        fillSpinner(spSource)
+
+        //creamos un observador para controlar que pasa cuando se clica en el spinner
+        spSource.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                initialState(mpMusic1,mpMusic2, videoView)
+                initializeSeekbar(mpMusic1,mpMusic2,videoView)
+            }
+        }
+
+        controlSound(mpMusic1,mpMusic2,videoView)
 
 
         //damos funcionalidad a los botones
@@ -102,6 +118,30 @@ class MainActivity : AppCompatActivity() {
         val sources = arrayOf("Musica mediante \"create\"","Musica mediante \"setDataSource\"","Video")
         val adapter = ArrayAdapter(this, com.google.android.material.R.layout.support_simple_spinner_dropdown_item, sources)
         sp.adapter=adapter
+    }
+
+    /**
+     * Deja el estado inicial de los botones y los mediaplayers preparado
+     *
+     */
+    private fun initialState(mp1: MediaPlayer, mp2: MediaPlayer, video: VideoView){
+        btPlay.isEnabled=true
+        btStop.isEnabled=false
+        btPause.isEnabled=false
+
+        if(mp1.isPlaying){
+            mp1.stop()
+            mp1.prepare()
+        }
+        if (mp2.isPlaying){
+            mp2.stop()
+            mp2.prepare()
+        }
+        if(video.isPlaying){
+            video.stopPlayback()
+            video.resume()
+        }
+
     }
 
     /**
@@ -143,8 +183,7 @@ class MainActivity : AppCompatActivity() {
             //empezamos a reproducir
             mp1.start()
         }else if(obtainSource(spSource)==1){
-            tvDuration.text=getDuration(mp1)
-            mp2.prepare()
+            tvDuration.text=getDuration(mp2)
             mp2.start()
         }else{
             val duration = video.duration.toLong()/1000
@@ -196,19 +235,24 @@ class MainActivity : AppCompatActivity() {
      *
      * @param mp
      */
-    private fun rewind(mp1:MediaPlayer, mp2:MediaPlayer, video:VideoView){
-        if(obtainSource(spSource)==0){
-        val position =mp1.currentPosition
-        if(position>1000){
-            mp1.seekTo(position-10000)
-        }else{
-            mp1.seekTo(0)
-        }
-        }else if(obtainSource(spSource)==1){
-
-        }else{
-            val position =videoView.currentPosition
-            video.seekTo(position-10000)
+    private fun rewind(mp1: MediaPlayer, mp2: MediaPlayer, video: VideoView) {
+        if (obtainSource(spSource) == 0) {
+            val position = mp1.currentPosition
+            if (position > 1000) {
+                mp1.seekTo(position - 10000)
+            } else {
+                mp1.seekTo(0)
+            }
+        } else if (obtainSource(spSource) == 1) {
+            val position = mp2.currentPosition
+            if (position > 1000) {
+                mp2.seekTo(position - 10000)
+            } else {
+                mp2.seekTo(0)
+            }
+        } else {
+            val position = videoView.currentPosition
+            video.seekTo(position - 10000)
         }
 
     }
@@ -223,7 +267,8 @@ class MainActivity : AppCompatActivity() {
             val position =mp1.currentPosition
             mp1.seekTo(position+10000)
         }else if(obtainSource(spSource)==1){
-
+            val position=mp2.currentPosition
+            mp2.seekTo(position+10000)
         }else{
             val position =videoView.currentPosition
             video.seekTo(position+10000)
@@ -231,25 +276,55 @@ class MainActivity : AppCompatActivity() {
     }
 
     /*
-    funcionalidad de la barra de progreso
-     */
+funcionalidad de la barra de progreso
+ */
 
-    /*
+    private fun controlSound(mp1: MediaPlayer, mp2: MediaPlayer, video: VideoView) {
 
-    inner class MediaObserver : Runnable {
-        // Se define el stop para poder parar el thread desde la aplicación
-        private val stop: AtomicBoolean = AtomicBoolean(false)
+        initializeSeekbar(mp1, mp2, videoView)
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) {
+                    if(spSource.selectedItemPosition==0)mp1.seekTo(progress)
+                    if(spSource.selectedItemPosition==1)mp2.seekTo(progress)
+                    if(spSource.selectedItemPosition==2)video.seekTo(progress)
+                }
+            }
 
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+    }
 
-        fun stop() {
-            stop.set(true)
+    private fun initializeSeekbar(mp1: MediaPlayer, mp2: MediaPlayer, video: VideoView){
+        if(spSource.selectedItemPosition==0){
+            seekBar.max =mp1.duration
+        }else if(spSource.selectedItemPosition==1){
+            seekBar.max =mp2.duration
+        }else{
+            seekBar.max =video.duration
         }
 
-        override fun run() {
-            progresBar.progress=mp.curr
+        val handler = Handler()
+        handler.postDelayed(object :Runnable{
+            override fun run() {
+                try {
+                    if(spSource.selectedItemPosition==0) {
+                        seekBar.progress = mp1.currentPosition
+                        tvTimer.text = (mp1.currentPosition / 1000).toString()
+                    }else if(spSource.selectedItemPosition==1){
+                        seekBar.progress = mp2.currentPosition
+                        tvTimer.text = (mp2.currentPosition/1000).toString()
+                    }else{
+                        seekBar.progress = video.currentPosition
+                        tvTimer.text = (video.currentPosition/1000).toString()
+                    }
+                    handler.postDelayed(this,0)
+                }catch (e:Exception){
+                    seekBar.progress=0
+                }
+            }
+        },0)
 
-
-        }
-    }*/
-
+    }
 }
