@@ -1,6 +1,5 @@
 package com.marticurto.reproductormultimedia
 
-import android.Manifest
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.net.Uri
@@ -17,26 +16,31 @@ import androidx.appcompat.app.AppCompatActivity
  *
  */
 class MainActivity : AppCompatActivity() {
-    lateinit var spSource:Spinner
-    lateinit var btPlay: Button
-    lateinit var btPause: Button
-    lateinit var btStop: Button
-    lateinit var ibRewind: ImageButton
-    lateinit var ibFastForward: ImageButton
-    lateinit var tvState : TextView
-    lateinit var tvTimer:TextView
-    lateinit var tvDuration:TextView
-    lateinit var seekBar: SeekBar
-    lateinit var videoView:VideoView
+    private lateinit var spSource:Spinner
+    private lateinit var btPlay: Button
+    private lateinit var btPause: Button
+    private lateinit var btStop: Button
+    private lateinit var ibRewind: ImageButton
+    private lateinit var ibFastForward: ImageButton
+    private lateinit var tvState : TextView
+    private lateinit var tvTimer:TextView
+    private lateinit var tvDuration:TextView
+    private lateinit var seekBar: SeekBar
+    private lateinit var videoView:VideoView
 
+    private lateinit var mpMusic1: MediaPlayer
+    private lateinit var mpMusic2: MediaPlayer
+
+
+    /* si necesitamos pedir permiso al usuario para leer y escribir archivos,
+    los podemos hacer asi
 
 
     private val REQUEST_EXTERNAL_STORAGE = 1
     private val PERMISSIONS_STORAGE = arrayOf<String>(
         Manifest.permission.READ_EXTERNAL_STORAGE,
         Manifest.permission.WRITE_EXTERNAL_STORAGE
-    )
-
+    )*/
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,10 +62,10 @@ class MainActivity : AppCompatActivity() {
 
         //creamos recursos audiovisuales
         val myUri: Uri = Uri.parse("android.resource://" + packageName + "/" + R.raw.music)
-        var mpMusic1 = MediaPlayer.create(this, myUri)
+        mpMusic1 = MediaPlayer.create(this, myUri)
 
         val myUri2: Uri = Uri.parse("android.resource://" + packageName + "/" + R.raw.music2)
-        var mpMusic2 = MediaPlayer()
+        mpMusic2 = MediaPlayer()
         mpMusic2.setAudioStreamType(AudioManager.STREAM_MUSIC)
         mpMusic2.setDataSource(applicationContext,myUri2)
         mpMusic2.prepare()
@@ -69,14 +73,22 @@ class MainActivity : AppCompatActivity() {
         val videoUri:Uri = Uri.parse("android.resource://" + packageName + "/" + R.raw.video)
         videoView.setVideoURI(videoUri)
 
+        /*
+        si queremos unos controles pror defecto podemos activar esto
+        en nuestro caso no sera necesario ya que los creamos nosotros
+
         val vidControl = MediaController(this)
         vidControl.setAnchorView(videoView)
-        videoView.setMediaController(vidControl)
+        videoView.setMediaController(vidControl)*/
 
 
         //preparamos la parte visual
+        btPlay.text="play"
+        btPause.text="Pause"
         btPause.isEnabled=false
+        btStop.text="stop"
         btStop.isEnabled=false
+        tvTimer.text="00:00"
         fillSpinner(spSource)
 
         //creamos un observador para controlar que pasa cuando se clica en el spinner
@@ -84,13 +96,14 @@ class MainActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
 
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                //cuando se cambie la seleccion del spinner reinicializamos los botones,textView y seekbar
                 initialState(mpMusic1,mpMusic2, videoView)
                 initializeSeekbar(mpMusic1,mpMusic2,videoView)
             }
         }
 
+        //controlamos la barra de progreso
         controlSound(mpMusic1,mpMusic2,videoView)
-
 
         //damos funcionalidad a los botones
         btPlay.setOnClickListener { starPlay(mpMusic1,mpMusic2,videoView) }
@@ -100,9 +113,16 @@ class MainActivity : AppCompatActivity() {
         ibFastForward.setOnClickListener { fastFroward(mpMusic1,mpMusic2,videoView) }
     }
 
+    /**
+     * Paramos la reproduccion y liberamos los recursos
+     *
+     */
     override fun onDestroy() {
         super.onDestroy()
-
+        mpMusic1.stop()
+        mpMusic2.stop()
+        //si giramos la pantalla la activi se destrye y se vuelve a crear
+        //asi que no podemos usar mpX.release() para desligar el recurso
     }
 
     /*
@@ -125,6 +145,8 @@ class MainActivity : AppCompatActivity() {
      *
      */
     private fun initialState(mp1: MediaPlayer, mp2: MediaPlayer, video: VideoView){
+        //solo dejamos el boton play activo, paramos cualquier reproduccion
+        //y dejamos las musicas/video preparados
         btPlay.isEnabled=true
         btStop.isEnabled=false
         btPause.isEnabled=false
@@ -141,7 +163,6 @@ class MainActivity : AppCompatActivity() {
             video.stopPlayback()
             video.resume()
         }
-
     }
 
     /**
@@ -169,6 +190,13 @@ class MainActivity : AppCompatActivity() {
     funciones para la reproduccion
      */
 
+    /**
+     * Empieza a reproducir una musica o video
+     *
+     * @param mp1
+     * @param mp2
+     * @param video
+     */
     private fun starPlay(mp1:MediaPlayer, mp2:MediaPlayer, video:VideoView) {
         tvState.text = "Playing"
 
@@ -177,10 +205,10 @@ class MainActivity : AppCompatActivity() {
         btPause.isEnabled = true
         btStop.isEnabled = true
 
+        //iniciamos la reproduccion y modificamos el campo de duracion
+        //segun la fuente seleccionada
         if (obtainSource(spSource) == 0) {
             tvDuration.text=getDuration(mp1)
-
-            //empezamos a reproducir
             mp1.start()
         }else if(obtainSource(spSource)==1){
             tvDuration.text=getDuration(mp2)
@@ -191,6 +219,14 @@ class MainActivity : AppCompatActivity() {
             video.start()
         }
     }
+
+    /**
+     * Tpausa la reproduccion del medio seleccionado
+     *
+     * @param mp1
+     * @param mp2
+     * @param video
+     */
     private fun pauseReproduction(mp1:MediaPlayer, mp2:MediaPlayer, video:VideoView){
         tvState.text="Paused"
 
@@ -199,8 +235,8 @@ class MainActivity : AppCompatActivity() {
         btPlay.isEnabled=true
         btStop.isEnabled=true
 
+        //pausamos la reproduccion segun la fuente seleccionada
         if (obtainSource(spSource) == 0) {
-            //pausamos
             mp1.pause()
         }else if(obtainSource(spSource)==1){
             mp2.pause()
@@ -209,16 +245,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Paramos la reproduccion del medio que este seleccionado
+     *
+     * @param mp1
+     * @param mp2
+     * @param video
+     */
     private fun stopReproduction(mp1:MediaPlayer, mp2:MediaPlayer, video:VideoView){
-        tvState.text="Stoped"
+        tvState.text="Stopped"
 
         //deshabilitamos los botones para que inidicar al usuario que puede hacer
         btStop.isEnabled=false
         btPause.isEnabled=false
         btPlay.isEnabled=true
 
+        //pausamos la reproduccion segun la fuente seleccionada
         if (obtainSource(spSource) == 0) {
-            //empezamos a reproducir
             mp1.stop()
             mp1.prepare()
         }else if(obtainSource(spSource)==1){
@@ -233,36 +276,33 @@ class MainActivity : AppCompatActivity() {
     /**
      * Retrocede la musica 10s
      *
-     * @param mp
+     * @param mp1
+     * @param mp2
+     * @param video
      */
     private fun rewind(mp1: MediaPlayer, mp2: MediaPlayer, video: VideoView) {
+        //retrocede la posicion de la fuente 10000ms
         if (obtainSource(spSource) == 0) {
             val position = mp1.currentPosition
-            if (position > 1000) {
-                mp1.seekTo(position - 10000)
-            } else {
-                mp1.seekTo(0)
-            }
+            mp1.seekTo(position - 10000)
         } else if (obtainSource(spSource) == 1) {
             val position = mp2.currentPosition
-            if (position > 1000) {
-                mp2.seekTo(position - 10000)
-            } else {
-                mp2.seekTo(0)
-            }
+            mp2.seekTo(position - 10000)
         } else {
             val position = videoView.currentPosition
             video.seekTo(position - 10000)
         }
-
     }
 
     /**
      * avanza la musica 10s
      *
-     * @param mp
+     * @param mp1
+     * @param mp2
+     * @param video
      */
     private fun fastFroward(mp1:MediaPlayer, mp2:MediaPlayer, video:VideoView){
+        //retrocede la posicion de la fuente 10000ms
         if(obtainSource(spSource)==0){
             val position =mp1.currentPosition
             mp1.seekTo(position+10000)
@@ -279,52 +319,78 @@ class MainActivity : AppCompatActivity() {
 funcionalidad de la barra de progreso
  */
 
+    /**
+     * Controla la posicion de la barra de posicion
+     *
+     * @param mp1
+     * @param mp2
+     * @param video
+     */
     private fun controlSound(mp1: MediaPlayer, mp2: MediaPlayer, video: VideoView) {
 
+        //inicializamos la seekbar segun la fuente de datos
         initializeSeekbar(mp1, mp2, videoView)
+
+        //creamos un listener para que la barra reaccione a cambios del usuario
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
+                    //desplazamos la musica al punto que este la barra de progreso
                     if(spSource.selectedItemPosition==0)mp1.seekTo(progress)
                     if(spSource.selectedItemPosition==1)mp2.seekTo(progress)
                     if(spSource.selectedItemPosition==2)video.seekTo(progress)
                 }
             }
-
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
     }
 
+    /**
+     * prepara la barra de reproduccion y modifica el texto segun sea necesario
+     *
+     * @param mp1
+     * @param mp2
+     * @param video
+     */
     private fun initializeSeekbar(mp1: MediaPlayer, mp2: MediaPlayer, video: VideoView){
-        if(spSource.selectedItemPosition==0){
-            seekBar.max =mp1.duration
-        }else if(spSource.selectedItemPosition==1){
-            seekBar.max =mp2.duration
-        }else{
-            seekBar.max =video.duration
+        //definimos el maximo segun la fuente
+        when (spSource.selectedItemPosition) {
+            0 -> {
+                seekBar.max =mp1.duration
+            }
+            1 -> {
+                seekBar.max =mp2.duration
+            }
+            else -> {
+                seekBar.max =video.duration
+            }
         }
 
+        //actualizamos la barra de progreso y el texto cada 0,1s
         val handler = Handler()
         handler.postDelayed(object :Runnable{
             override fun run() {
                 try {
-                    if(spSource.selectedItemPosition==0) {
-                        seekBar.progress = mp1.currentPosition
-                        tvTimer.text = (mp1.currentPosition / 1000).toString()
-                    }else if(spSource.selectedItemPosition==1){
-                        seekBar.progress = mp2.currentPosition
-                        tvTimer.text = (mp2.currentPosition/1000).toString()
-                    }else{
-                        seekBar.progress = video.currentPosition
-                        tvTimer.text = (video.currentPosition/1000).toString()
+                    when (spSource.selectedItemPosition) {
+                        0 -> {
+                            seekBar.progress = mp1.currentPosition
+                            tvTimer.text = (mp1.currentPosition / 1000).toString()
+                        }
+                        1 -> {
+                            seekBar.progress = mp2.currentPosition
+                            tvTimer.text = (mp2.currentPosition/1000).toString()
+                        }
+                        else -> {
+                            seekBar.progress = video.currentPosition
+                            tvTimer.text = (video.currentPosition/1000).toString()
+                        }
                     }
-                    handler.postDelayed(this,0)
+                    handler.postDelayed(this,100)
                 }catch (e:Exception){
                     seekBar.progress=0
                 }
             }
         },0)
-
     }
 }
