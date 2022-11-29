@@ -24,7 +24,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="36dp"
-        android:text="play"
+
         app:layout_constraintStart_toStartOf="@+id/spSource"
         app:layout_constraintTop_toBottomOf="@+id/spSource" />
 
@@ -32,7 +32,6 @@
         android:id="@+id/btPause"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="pause"
         app:layout_constraintEnd_toStartOf="@+id/btStop"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/btplay"
@@ -42,7 +41,6 @@
         android:id="@+id/btStop"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="stop"
         app:layout_constraintEnd_toEndOf="@+id/spSource"
         app:layout_constraintTop_toTopOf="@+id/btPause" />
 
@@ -56,14 +54,7 @@
         app:layout_constraintTop_toBottomOf="@+id/btPause" />
 
 
-    <TextView
-        android:id="@+id/tvMetadata"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="52dp"
-        app:layout_constraintStart_toEndOf="@+id/tvState"
-        app:layout_constraintTop_toTopOf="@+id/tvState" />
-
+    <!-- icons from https://materialdesignicons.com/-->
     <ImageButton
         android:id="@+id/ibRewind"
         android:layout_width="45dp"
@@ -98,6 +89,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
+        android:textSize="20sp"
         app:layout_constraintStart_toStartOf="@+id/ibRewind"
         app:layout_constraintTop_toBottomOf="@+id/tvTimer" />
 
@@ -105,6 +97,7 @@
         android:id="@+id/tvDuration"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textSize="20sp"
         app:layout_constraintEnd_toEndOf="@+id/seekBar"
         app:layout_constraintTop_toBottomOf="@+id/seekBar" />
 
@@ -112,8 +105,31 @@
         android:id="@+id/tvTimer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textSize="20sp"
         app:layout_constraintStart_toStartOf="@+id/seekBar"
         app:layout_constraintTop_toBottomOf="@+id/seekBar" />
+
+    <TextView
+        android:id="@+id/tvMetadata"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="hola"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.184"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/seekBar"
+        app:layout_constraintVertical_bias="0.234" />
+
+    <TextView
+        android:id="@+id/tvMetadata2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="hola23"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="@+id/tvMetadata"
+        app:layout_constraintTop_toBottomOf="@+id/tvMetadata" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

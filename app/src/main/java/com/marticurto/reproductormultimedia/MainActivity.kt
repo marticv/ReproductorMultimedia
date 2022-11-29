@@ -1,6 +1,8 @@
 package com.marticurto.reproductormultimedia
 
+import android.content.Intent
 import android.media.AudioManager
+import android.media.MediaMetadataRetriever
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
@@ -8,6 +10,7 @@ import android.os.Handler
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import java.lang.Thread.sleep
 
 /**
  * App para reproducir musica y video. Musica obtenida de https://file-examples.com/ y video de https://www.learningcontainer.com/
@@ -25,11 +28,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvState : TextView
     private lateinit var tvTimer:TextView
     private lateinit var tvDuration:TextView
+    private lateinit var tvMetadata:TextView
+    private lateinit var tvMetadata2:TextView
     private lateinit var seekBar: SeekBar
     private lateinit var videoView:VideoView
 
     private lateinit var mpMusic1: MediaPlayer
     private lateinit var mpMusic2: MediaPlayer
+
+
 
 
     /* si necesitamos pedir permiso al usuario para leer y escribir archivos,
@@ -54,6 +61,8 @@ class MainActivity : AppCompatActivity() {
         ibRewind = findViewById(R.id.ibRewind)
         ibFastForward = findViewById(R.id.ibFastForward)
         tvState = findViewById(R.id.tvState)
+        tvMetadata = findViewById(R.id.tvMetadata)
+        tvMetadata2 = findViewById(R.id.tvMetadata2)
         tvTimer = findViewById(R.id.tvTimer)
         tvDuration =findViewById(R.id.tvDuration)
         seekBar = findViewById(R.id.seekBar)
@@ -90,6 +99,7 @@ class MainActivity : AppCompatActivity() {
         btStop.isEnabled=false
         tvTimer.text="00:00"
         fillSpinner(spSource)
+        tvDuration.text=getDuration(mpMusic1)
 
         //creamos un observador para controlar que pasa cuando se clica en el spinner
         spSource.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -111,6 +121,12 @@ class MainActivity : AppCompatActivity() {
         btStop.setOnClickListener { stopReproduction(mpMusic1,mpMusic2,videoView) }
         ibRewind.setOnClickListener { rewind(mpMusic1,mpMusic2,videoView) }
         ibFastForward.setOnClickListener { fastFroward(mpMusic1,mpMusic2,videoView) }
+
+
+        Handler().postDelayed({
+            startActivity(Intent(MainActivity@this,PopUpSubcribe::class.java))
+        }, 5000)
+
     }
 
     /**
@@ -121,6 +137,8 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         mpMusic1.stop()
         mpMusic2.stop()
+        videoView.stopPlayback()
+        videoView.resume()
         //si giramos la pantalla la activi se destrye y se vuelve a crear
         //asi que no podemos usar mpX.release() para desligar el recurso
     }
@@ -163,6 +181,63 @@ class MainActivity : AppCompatActivity() {
             video.stopPlayback()
             video.resume()
         }
+
+        if(spSource.selectedItemPosition==0)tvDuration.text=getDuration(mp1)
+        if(spSource.selectedItemPosition==1)tvDuration.text=getDuration(mp2)
+        if(spSource.selectedItemPosition==2) {
+
+            var duration = video.duration.toLong()/1000
+            tvDuration.text=duration.toString()
+        }
+
+
+
+        val myMetadata=obtainMetadata()
+        tvMetadata.text=myMetadata[0]
+        tvMetadata2.text=myMetadata[1]
+    }
+
+    /**
+     * obtenemos metadoatos de las fuentes
+     *
+     * @return
+     */
+    private fun obtainMetadata():Array<String>{
+        //creamos variables necesarias
+        var metadata= MediaMetadataRetriever()
+        val myMetaData:Array<String>
+        val title:String?
+        val genre:String?
+
+        /*
+        Para cada fuente obtenemos los metadatos a partir de la uri
+         */
+        if(spSource.selectedItemPosition==0) {
+            metadata.setDataSource(
+                MainActivity@ this,
+                Uri.parse("android.resource://" + packageName + "/" + R.raw.music)
+            )
+            title = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+            genre= metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE)
+            myMetaData = arrayOf("Titulo: $title","Genero: $genre")
+        }else if(spSource.selectedItemPosition==1){
+            metadata.setDataSource(
+                MainActivity@ this,
+                Uri.parse("android.resource://" + packageName + "/" + R.raw.music2)
+            )
+            title = metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+            genre= metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE)
+            myMetaData = arrayOf("Titulo: $title","Genero: $genre")
+        }else{
+            metadata.setDataSource(
+                MainActivity@ this,
+                Uri.parse("android.resource://" + packageName + "/" + R.raw.video)
+            )
+            val videoMetadata:String?=metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+            val videoMetadata2:String?=metadata.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
+            myMetaData = arrayOf("Titulo: $videoMetadata","ancho del video: $videoMetadata2")
+        }
+        return myMetaData
     }
 
     /**
@@ -208,14 +283,10 @@ class MainActivity : AppCompatActivity() {
         //iniciamos la reproduccion y modificamos el campo de duracion
         //segun la fuente seleccionada
         if (obtainSource(spSource) == 0) {
-            tvDuration.text=getDuration(mp1)
             mp1.start()
         }else if(obtainSource(spSource)==1){
-            tvDuration.text=getDuration(mp2)
             mp2.start()
         }else{
-            val duration = video.duration.toLong()/1000
-            tvDuration.text=duration.toString()
             video.start()
         }
     }
